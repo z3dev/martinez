@@ -69,7 +69,9 @@ const nextPos = (pos, resultEvents, processed, origPos) => {
     } else {
       newPos++
     }
-    p1 = resultEvents[newPos].point
+    if (newPos < length) {
+      p1 = resultEvents[newPos].point
+    }
   }
 
   newPos = pos - 1
@@ -145,7 +147,9 @@ const connectEdges = (sortedEvents) => {
     // Helper function that combines marking an event as processed with assigning its output contour ID
     const markAsProcessed = (pos) => {
       processed[pos] = true
-      resultEvents[pos].outputContourId = contourId
+      if (pos < resultEvents.length && resultEvents[pos]) {
+        resultEvents[pos].outputContourId = contourId
+      }
     }
 
     let pos = i
@@ -164,7 +168,7 @@ const connectEdges = (sortedEvents) => {
 
       pos = nextPos(pos, resultEvents, processed, origPos)
 
-      if (pos === origPos) {
+      if (pos === origPos || pos >= resultEvents.length || !resultEvents[pos]) {
         break
       }
     }

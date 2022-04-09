@@ -16,34 +16,37 @@ const banner = `\
  */
 `;
 
-module.exports = [{
-  input: './index.js',
-  output: {
-    file: `dist/${name}.umd.js`,
-    name: 'martinez',
-    sourcemap: true,
-    format: 'umd',
-    banner
+module.exports = [
+  {
+    input: './index.js',
+    output: {
+      file: `dist/${name}.umd.js`,
+      name: 'martinez',
+      sourcemap: true,
+      format: 'umd',
+      banner
+    },
+    plugins: [
+      resolve(),  // so Rollup can find external libs
+      commonjs(), // so Rollup can convert commonJS to an ES module
+      buble()
+    ]
   },
-  plugins: [
-    resolve(),  // so Rollup can find external libs
-    commonjs(), // so Rollup can convert commonJS to an ES module
-    buble()
-  ]
-}, {
-  input: 'demo/js/index.js',
-  output: {
-    file: 'demo/js/bundle.js',
-    format: 'iife',
-    globals: {
-      leaflet: 'L',
-      jsts: 'jsts'
-    }
-  },
-  external: ['jsts', 'leaflet'],
-  plugins: [
-    resolve(),  // so Rollup can find external libs
-    commonjs(), // so Rollup can convert commonJS to an ES module
-    buble()
-  ]
-}];
+  {
+    input: 'demo/js/index.js',
+    output: {
+      file: 'demo/js/bundle.js',
+      format: 'iife',
+      globals: {
+        leaflet: 'L',
+        jsts: 'jsts'
+      }
+    },
+    external: ['jsts', 'leaflet'],
+    plugins: [
+      resolve(),  // so Rollup can find external libs
+      commonjs(), // so Rollup can convert commonJS to an ES module
+      buble()
+    ]
+  }
+];
