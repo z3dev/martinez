@@ -1,108 +1,17 @@
-(function (L$1) {
-  'use strict';
+/**
+ * martinez v0.7.3
+ * Martinez polygon clipping algorithm, does boolean operation on polygons (multipolygons, polygons with holes etc): intersection, union, difference, xor
+ *
+ * @author Alex Milevski <info@w8r.name>
+ * @license MIT
+ * @preserve
+ */
 
-  function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
-
-  var L__default = /*#__PURE__*/_interopDefaultLegacy(L$1);
-
-  L__default["default"].Coordinates = L__default["default"].Control.extend({
-    options: {
-      position: 'bottomright'
-    },
-
-    onAdd: function(map) {
-      this._container = L__default["default"].DomUtil.create('div', 'leaflet-bar');
-      this._container.style.background = '#ffffff';
-      map.on('mousemove', this._onMouseMove, this);
-      return this._container;
-    },
-
-    _onMouseMove: function(e) {
-      this._container.innerHTML = '<span style="padding: 5px">' +
-        e.latlng.lng.toFixed(3) + ', ' + e.latlng.lat.toFixed(3) + '</span>';
-    }
-
-  });
-
-  L__default["default"].EditControl = L__default["default"].Control.extend({
-
-    options: {
-      position: 'topleft',
-      callback: null,
-      kind: '',
-      html: ''
-    },
-
-    onAdd: function (map) {
-      var container = L__default["default"].DomUtil.create('div', 'leaflet-control leaflet-bar'),
-          link = L__default["default"].DomUtil.create('a', '', container);
-
-      link.href = '#';
-      link.title = 'Create a new ' + this.options.kind;
-      link.innerHTML = this.options.html;
-      L__default["default"].DomEvent.on(link, 'click', L__default["default"].DomEvent.stop)
-                .on(link, 'click', function () {
-                  window.LAYER = this.options.callback.call(map.editTools);
-                }, this);
-
-      return container;
-    }
-
-  });
-
-  L__default["default"].NewPolygonControl = L__default["default"].EditControl.extend({
-    options: {
-      position: 'topleft',
-      kind: 'polygon',
-      html: '▰'
-    }
-  });
-
-  L__default["default"].BooleanControl = L__default["default"].Control.extend({
-    options: {
-      position: 'topright'
-    },
-
-    onAdd: function(map) {
-      var container = this._container = L__default["default"].DomUtil.create('div', 'leaflet-bar');
-      this._container.style.background = '#ffffff';
-      this._container.style.padding = '10px';
-      container.innerHTML = [
-        '<form>',
-          '<ul style="list-style:none; padding-left: 0">',
-            '<li>','<label>', '<input type="radio" name="op" value="0" checked />',  ' Intersection', '</label>', '</li>',
-            '<li>','<label>', '<input type="radio" name="op" value="1" />',  ' Union', '</label>', '</li>',
-            '<li>','<label>', '<input type="radio" name="op" value="2" />',  ' Difference A - B', '</label>', '</li>',
-            '<li>','<label>', '<input type="radio" name="op" value="5" />',  ' Difference B - A', '</label>', '</li>',
-            '<li>','<label>', '<input type="radio" name="op" value="3" />',  ' Xor', '</label>', '</li>',
-          '</ul>',
-          '<input type="submit" value="Run">', '<input name="clear" type="button" value="Clear layers">',
-        '</form>'].join('');
-      var form = container.querySelector('form');
-      L__default["default"].DomEvent
-        .on(form, 'submit', function (evt) {
-          L__default["default"].DomEvent.stop(evt);
-          var radios = Array.prototype.slice.call(
-            form.querySelectorAll('input[type=radio]'));
-          for (var i = 0, len = radios.length; i < len; i++) {
-            if (radios[i].checked) {
-              this.options.callback(parseInt(radios[i].value));
-              break;
-            }
-          }
-        }, this)
-        .on(form['clear'], 'click', function(evt) {
-          L__default["default"].DomEvent.stop(evt);
-          this.options.clear();
-        }, this);
-
-      L__default["default"].DomEvent
-        .disableClickPropagation(this._container)
-        .disableScrollPropagation(this._container);
-      return this._container;
-    }
-
-  });
+(function (global, factory) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+  typeof define === 'function' && define.amd ? define(['exports'], factory) :
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.martinez = {}));
+})(this, (function (exports) { 'use strict';
 
   function DEFAULT_COMPARE (a, b) { return a > b ? 1 : a < b ? -1 : 0; }
 
@@ -2100,234 +2009,18 @@
     return boolean(subject, clipping, INTERSECTION);
   }
 
-  // import * as martinez from '../../dist/martinez.min';
+  /**
+   * @enum {Number}
+   */
+  var operations = { UNION: UNION, DIFFERENCE: DIFFERENCE, INTERSECTION: INTERSECTION, XOR: XOR };
 
-  var mode = window.location.hash.substring(1);
-  var path = '../test/fixtures/';
-  var file;
+  exports.diff = diff;
+  exports.intersection = intersection;
+  exports.operations = operations;
+  exports.union = union;
+  exports.xor = xor;
 
-  switch (mode) {
-    case 'geo':
-      file = 'asia.geojson';
-      break;
-    case 'states':
-      file = 'states_source.geojson';
-      break;
-    case 'trapezoid':
-      file = 'trapezoid-box.geojson';
-      break;
-    case 'canada':
-      file = 'canada.geojson';
-      break;
-    case 'horseshoe':
-      file = 'horseshoe.geojson';
-      break;
-    case 'hourglasses':
-      file = 'hourglasses.geojson';
-      break;
-    case 'edge_overlap':
-      file = 'polygon_trapezoid_edge_overlap.geojson';
-      break;
-    case 'touching_boxes':
-      file = 'touching_boxes.geojson';
-      break;
-    case 'triangles':
-      file = 'two_pointed_triangles.geojson';
-      break;
-    case 'holecut':
-      file = 'hole_cut.geojson';
-      break;
-    case 'overlapping_segments':
-      file = 'overlapping_segments.geojson';
-      break;
-    case 'overlap_loop':
-      file = 'overlap_loop.geojson';
-      break;
-    case 'overlap_y':
-      file = 'overlap_y.geojson';
-      break;
-    case 'overlap_two':
-      file = 'overlap_two.geojson';
-      break;
-    case 'disjoint_boxes':
-      file = 'disjoint_boxes.geojson';
-      break;
-    case 'polygons_edge_overlap':
-      file = 'polygons_edge_overlap.geojson';
-      break;
-    case 'vertical_boxes':
-      file = 'vertical_boxes.geojson';
-      break;
-    case 'collapsed':
-      file = 'collapsed.geojson';
-      break;
-    case 'fatal1':
-      file = 'fatal1.geojson';
-      break;
-    case 'fatal2':
-      file = 'fatal2.geojson';
-      break;
-    case 'fatal3':
-      file = 'fatal3.geojson';
-      break;
-    case 'fatal4':
-      file = 'fatal4.geojson';
-      break;
-    case 'rectangles':
-      file = 'rectangles.geojson';
-      break;
-    default:
-      file = 'hole_hole.geojson';
-      break;
-  }
+  Object.defineProperty(exports, '__esModule', { value: true });
 
-  console.log(mode);
-
-
-  var OPERATIONS = {
-    INTERSECTION: 0,
-    UNION:        1,
-    DIFFERENCE:   2,
-    XOR:          3
-  };
-
-  var div = document.createElement('div');
-  div.id = 'image-map';
-  div.style.width = div.style.height = '100%';
-  document.body.appendChild(div);
-
-  // create the slippy map
-  var map = window.map = L.map('image-map', {
-    minZoom: 1,
-    maxZoom: 20,
-    center: [0, 0],
-    zoom: 2,
-    crs: mode === 'geo' ? L.CRS.EPSG4326 : L.extend({}, L.CRS.Simple, {
-      transformation: new L.Transformation(1/8, 0, -1/8, 0)
-    }),
-    editable: true
-  });
-
-  map.addControl(new L.NewPolygonControl({
-    callback: map.editTools.startPolygon
-  }));
-  map.addControl(new L.Coordinates());
-  map.addControl(new L.BooleanControl({
-    callback: run,
-    clear: clear
-  }));
-
-  var drawnItems = window.drawnItems = L.geoJson().addTo(map);
-  var rawData = null;
-  function loadData(path) {
-    console.log(path);
-    fetch(path)
-      .then(function (r) { return r.json(); })
-      .then(function (json) {
-          drawnItems.addData(json);
-          rawData = json;
-          map.fitBounds(drawnItems.getBounds().pad(0.05), { animate: false });
-      });
-  }
-
-  function clear() {
-    drawnItems.clearLayers();
-    results.clearLayers();
-    rawData = null;
-  }
-
-  var reader = new jsts.io.GeoJSONReader();
-  var writer = new jsts.io.GeoJSONWriter();
-
-  function getClippingPoly (layers) {
-    if (rawData !== null && rawData.features.length > 1) { return rawData.features[1]; }
-    return layers[1].toGeoJSON();
-  }
-
-  function run (op) {
-    var layers = drawnItems.getLayers();
-    if (layers.length < 2) { return; }
-    var subject = rawData !== null ? rawData.features[0] : layers[0].toGeoJSON();
-    var clipping = getClippingPoly(layers);
-
-    //console.log('input', subject, clipping, op);
-
-    // subject  = JSON.parse(JSON.stringify(subject));
-    // clipping = JSON.parse(JSON.stringify(clipping));
-
-    var operation;
-    if (op === OPERATIONS.INTERSECTION) {
-      operation = intersection;
-    } else if (op === OPERATIONS.UNION) {
-      operation = union;
-    } else if (op === OPERATIONS.DIFFERENCE) {
-      operation = diff;
-    } else if (op === 5) { // B - A
-      operation = diff;
-
-      var temp = subject;
-      subject  = clipping;
-      clipping = temp;
-    } else {
-      operation = xor;
-    }
-
-    console.time('martinez');
-    var result = operation(subject.geometry.coordinates, clipping.geometry.coordinates);
-    console.timeEnd('martinez');
-
-    console.log('result', result);
-    // console.log(JSON.stringify(result));
-    results.clearLayers();
-
-    if (result !== null) {
-      results.addData({
-        'type': 'Feature',
-        'geometry': {
-          'type': 'MultiPolygon',
-          'coordinates': result
-        }
-      });
-
-      setTimeout(function() {
-        console.time('jsts');
-        var s = reader.read(subject);
-        var c = reader.read(clipping);
-        var res;
-        if (op === OPERATIONS.INTERSECTION) {
-          res = s.geometry.intersection(c.geometry);
-        } else if (op === OPERATIONS.UNION) {
-          res = s.geometry.union(c.geometry);
-        } else if (op === OPERATIONS.DIFFERENCE) {
-          res = s.geometry.difference(c.geometry);
-        } else {
-          res = s.geometry.symDifference(c.geometry);
-        }
-        res = writer.write(res);
-        console.timeEnd('jsts');
-        // console.log('JSTS result', res);
-      }, 500);
-    }
-  }
-
-  map.on('editable:created', function(evt) {
-    drawnItems.addLayer(evt.layer);
-    evt.layer.on('click', function(e) {
-      if ((e.originalEvent.ctrlKey || e.originalEvent.metaKey) && this.editEnabled()) {
-        this.editor.newHole(e.latlng);
-      }
-    });
-  });
-
-  var results = window.results = L.geoJson(null, {
-    style: function(feature) {
-      return {
-        color: 'red',
-        weight: 1
-      };
-    }
-  }).addTo(map);
-
-  loadData(path + file);
-
-})(L);
+}));
+//# sourceMappingURL=martinez.umd.js.map
